@@ -16,81 +16,172 @@ chatForm.addEventListener("submit", async (event) => {
     }
 
 
+    // -------------------------
+    // Add user message
+    // -------------------------
+
     addMessage(message, "user");
 
     messageInput.value = "";
+
+
+    // -------------------------
+    // UI state
+    // -------------------------
 
     typing.style.display = "block";
     sendButton.disabled = true;
 
 
-   try {
+    try {
 
-    const response = await fetch(
-       // "http://localhost:3000/api/ai/chat"
-        "https://aichatbot-cre3.onrender.com/api/ai/chat",
-        {
-            method: "POST",
+        // -------------------------
+        // Send request
+        // -------------------------
 
-            headers: {
-                "Content-Type": "text/plain"
-            },
+        const response = await fetch(
+            "https://aichatbot-cre3.onrender.com/api/ai/chat",
+            {
+                method: "POST",
 
-            body: message
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify(message)
+            }
+        );
+
+
+        // -------------------------
+        // Check response
+        // -------------------------
+
+        if (!response.ok) {
+
+            const errorText = await response.text();
+
+            console.error(
+                "Server error:",
+                errorText
+            );
+
+            throw new Error(
+                `Server returned ${response.status}`
+            );
         }
-    );
 
-    if (!response.ok) {
-        throw new Error("Something went wrong");
-    }
 
-    typing.style.display = "none";
+        // -------------------------
+        // Check stream
+        // -------------------------
 
-    // Create empty AI message
-    const aiMessage = addMessage("", "ai");
+        if (!response.body) {
 
-    const paragraph = aiMessage.querySelector("p");
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-
-    while (true) {
-
-        const { value, done } = await reader.read();
-
-        if (done) {
-            break;
+            throw new Error(
+                "Streaming is not supported by this response"
+            );
         }
 
-        const chunk = decoder.decode(value, {
-            stream: true
-        });
 
-        //console.log("Received chunk:", chunk);
+        // -------------------------
+        // Create AI message
+        // -------------------------
 
-        paragraph.textContent += chunk;
+        typing.style.display = "none";
 
-        chatBox.scrollTop = chatBox.scrollHeight;
+        const aiMessage = addMessage("", "ai");
+
+        const paragraph =
+            aiMessage.querySelector("p");
+
+
+        // -------------------------
+        // Read stream
+        // -------------------------
+
+        const reader =
+            response.body.getReader();
+
+        const decoder =
+            new TextDecoder("utf-8");
+
+
+        while (true) {
+
+            const {
+                value,
+                done
+            } = await reader.read();
+
+
+            if (done) {
+                break;
+            }
+
+
+            const chunk =
+                decoder.decode(
+                    value,
+                    {
+                        stream: true
+                    }
+                );
+
+
+            console.log(
+                "Received chunk:",
+                chunk
+            );
+
+
+            // Add streamed text
+            paragraph.textContent += chunk;
+
+
+            // Keep chat at bottom
+            chatBox.scrollTop =
+                chatBox.scrollHeight;
+        }
+
+
+        // Flush decoder
+        const remaining =
+            decoder.decode();
+
+        if (remaining) {
+
+            paragraph.textContent +=
+                remaining;
+
+        }
+
+
+    } catch (error) {
+
+        console.error(
+            "Chat error:",
+            error
+        );
+
+
+        typing.style.display = "none";
+
+
+        addMessage(
+            "Sorry, something went wrong. Please try again.",
+            "ai"
+        );
+
+    } finally {
+
+        typing.style.display = "none";
+
+        sendButton.disabled = false;
+
+        messageInput.focus();
+
     }
-
-}
-catch (error) {
-
-    console.error(error);
-
-    addMessage(
-        "Sorry, something went wrong. Please try again.",
-        "ai"
-    );
-
-}
-finally {
-
-    typing.style.display = "none";
-    sendButton.disabled = false;
-    messageInput.focus();
-
-}
 
 });
 
@@ -98,45 +189,115 @@ finally {
 
 function addMessage(text, sender) {
 
-    const messageDiv = document.createElement("div");
+    const messageDiv =
+        document.createElement("div");
 
-    messageDiv.classList.add("message");
+    messageDiv.classList.add(
+        "message"
+    );
+
 
     if (sender === "user") {
-        messageDiv.classList.add("user-message");
+
+        messageDiv.classList.add(
+            "user-message"
+        );
+
     } else {
-        messageDiv.classList.add("ai-message");
+
+        messageDiv.classList.add(
+            "ai-message"
+        );
+
     }
 
-    const avatar = document.createElement("div");
 
-    avatar.classList.add("avatar");
+    // -------------------------
+    // Avatar
+    // -------------------------
 
-    avatar.textContent = sender === "user" ? "YOU" : "AI";
+    const avatar =
+        document.createElement("div");
 
-    const content = document.createElement("div");
+    avatar.classList.add(
+        "avatar"
+    );
 
-    content.classList.add("message-content");
+    avatar.textContent =
+        sender === "user"
+            ? "YOU"
+            : "AI";
 
-    const senderName = document.createElement("span");
 
-    senderName.classList.add("sender");
+    // -------------------------
+    // Content
+    // -------------------------
 
-    senderName.textContent = sender === "user" ? "You" : "AI";
+    const content =
+        document.createElement("div");
 
-    const paragraph = document.createElement("p");
+    content.classList.add(
+        "message-content"
+    );
+
+
+    // -------------------------
+    // Sender
+    // -------------------------
+
+    const senderName =
+        document.createElement("span");
+
+    senderName.classList.add(
+        "sender"
+    );
+
+    senderName.textContent =
+        sender === "user"
+            ? "You"
+            : "AI";
+
+
+    // -------------------------
+    // Message
+    // -------------------------
+
+    const paragraph =
+        document.createElement("p");
 
     paragraph.textContent = text;
 
-    content.appendChild(senderName);
-    content.appendChild(paragraph);
 
-    messageDiv.appendChild(avatar);
-    messageDiv.appendChild(content);
+    // -------------------------
+    // Build message
+    // -------------------------
 
-    chatBox.appendChild(messageDiv);
+    content.appendChild(
+        senderName
+    );
 
-    chatBox.scrollTop = chatBox.scrollHeight;
+    content.appendChild(
+        paragraph
+    );
+
+    messageDiv.appendChild(
+        avatar
+    );
+
+    messageDiv.appendChild(
+        content
+    );
+
+    chatBox.appendChild(
+        messageDiv
+    );
+
+
+    // Scroll down
+
+    chatBox.scrollTop =
+        chatBox.scrollHeight;
+
 
     return messageDiv;
 }

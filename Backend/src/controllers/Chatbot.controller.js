@@ -17,19 +17,20 @@ async function chatBotController(req, res) {
         res.setHeader("Content-Type", "text/plain; charset=utf-8");
         res.setHeader("Cache-Control", "no-cache");
         res.setHeader("Connection", "keep-alive");
+        res.setHeader("Transfer-Encoding", "chunked");
 
         for await (const event of stream) {
-
-            //console.log("EVENT:", event.event_type);
 
             if (
                 event.event_type === "step.delta" &&
                 event.delta?.type === "text"
             ) {
 
-              //  console.log("CHUNK:", event.delta.text);
+                const chunk = event.delta.text;
 
-                res.write(event.delta.text);
+                console.log("CHUNK:", chunk);
+
+                res.write(chunk);
             }
         }
 
@@ -40,11 +41,13 @@ async function chatBotController(req, res) {
         console.error("Gemini error:", error);
 
         if (!res.headersSent) {
-            res.status(500).json({
+            return res.status(500).json({
                 message: "Gemini request failed",
                 error: error.message
             });
         }
+
+        res.end();
     }
 }
 
