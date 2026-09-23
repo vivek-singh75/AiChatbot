@@ -27,7 +27,8 @@ chatForm.addEventListener("submit", async (event) => {
    try {
 
     const response = await fetch(
-        "http://localhost:3000/api/ai/chat",
+       // "http://localhost:3000/api/ai/chat"
+        "https://aichatbot-cre3.onrender.com/api/ai/chat",
         {
             method: "POST",
 
