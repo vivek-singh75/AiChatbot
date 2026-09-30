@@ -2,7 +2,7 @@ const geminiResponse = require("../services/ai.service");
 
 async function chatBotController(req, res) {
 
-    const input = req.body;
+    const input = req.body || "hii baby"
 
     if (!input) {
         return res.status(400).json({
@@ -46,7 +46,7 @@ async function chatBotController(req, res) {
                 error: error.message
             });
         }
-
+  
         res.end();
     }
 }

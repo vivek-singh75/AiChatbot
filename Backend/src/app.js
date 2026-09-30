@@ -6,11 +6,14 @@ const app = express();
 const chatbotCont = require("./routes/chatbot.route");
 
 // CORS
-app.use(
-    cors({
-        origin: "https://vivek-singh75.github.io"
-    })
-);
+app.use(cors({
+    origin: [
+        "http://localhost:5500",
+        "http://127.0.0.1:5500",
+        "http://localhost:5173",
+        "https://vivek-singh75.github.io"
+    ]
+}));
 
 // Body parser
 app.use(express.json());

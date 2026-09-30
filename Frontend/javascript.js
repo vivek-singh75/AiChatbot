@@ -41,16 +41,19 @@ chatForm.addEventListener("submit", async (event) => {
 
         const response = await fetch(
             "https://aichatbot-cre3.onrender.com/api/ai/chat",
+            //"http://localhost:3000/api/ai/chat",
             {
                 method: "POST",
 
                 headers: {
-                    "Content-Type": "application/json"
+                    "Content-Type": "text/plain"
                 },
 
-                body: JSON.stringify(message)
+                body: message
             }
         );
+
+        console.log(response)
 
 
         // -------------------------
